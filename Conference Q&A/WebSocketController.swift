@@ -71,9 +71,23 @@ final class WebSocketController: ObservableObject {
     self.socket.resume()
   }
 
-  func addQuestion(_ content: String) {
-    // TODO: Implement
-  }
+    func addQuestion(_ content: String) {
+        guard let id = self.id else { return }
+        // 1
+        let message = NewQuestionMessage(id: id, content: content)
+        do {
+            // 2
+            let data = try encoder.encode(message)
+            // 3
+            self.socket.send(.data(data)) { (err) in
+                if err != nil {
+                    print(err.debugDescription)
+                }
+            }
+        } catch {
+            print(error)
+        }
+    }
 
     func handle(_ data: Data) {
         do {
