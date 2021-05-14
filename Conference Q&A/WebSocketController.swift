@@ -66,7 +66,10 @@ final class WebSocketController: ObservableObject {
   }
     
   func connect() {
-    // TODO: Implement
+    self.socket = session.webSocketTask(with:
+      URL(string: "ws://localhost:8080/socket")!)
+    self.listen()
+    self.socket.resume()
   }
 
   func addQuestion(_ content: String) {
@@ -78,7 +81,39 @@ final class WebSocketController: ObservableObject {
   }
 
   func listen() {
-    // TODO: Implement
+    // 1
+    self.socket.receive { [weak self] (result) in
+      guard let self = self else { return }
+      // 2
+      switch result {
+      case .failure(let error):
+        print(error)
+        // 3
+        let alert = Alert(
+            title: Text("Unable to connect to server!"),
+            dismissButton: .default(Text("Retry")) {
+              self.alert = nil
+              self.socket.cancel(with: .goingAway, reason: nil)
+              self.connect()
+            }
+        )
+        self.alert = alert
+        return
+      case .success(let message):
+        // 4
+        switch message {
+        case .data(let data):
+          self.handle(data)
+        case .string(let str):
+          guard let data = str.data(using: .utf8) else { return }
+          self.handle(data)
+        @unknown default:
+          break
+        }
+      }
+      // 5
+      self.listen()
+    }
   }
 
   func handleQuestionAnswer(_ data: Data) throws {
