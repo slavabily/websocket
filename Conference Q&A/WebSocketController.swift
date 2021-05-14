@@ -50,7 +50,6 @@ final class WebSocketController: ObservableObject {
     }
   }
 
-
   private var id: UUID!
   private let session: URLSession
   var socket: URLSessionWebSocketTask!
@@ -76,9 +75,29 @@ final class WebSocketController: ObservableObject {
     // TODO: Implement
   }
 
-  func handle(_ data: Data) {
-    // TODO: Implement
-  }
+    func handle(_ data: Data) {
+        do {
+            // 1
+            let sinData = try decoder.decode(QnAMessageSinData.self, from: data)
+            // 2
+            switch sinData.type {
+            case .handshake:
+                // 3
+                print("Shook the hand")
+                let message = try decoder.decode(QnAHandshake.self, from: data)
+                self.id = message.id
+            // 4
+            case .questionResponse:
+                try self.handleQuestionResponse(data)
+            case .questionAnswer:
+                try self.handleQuestionAnswer(data)
+            default:
+                break
+            }
+        } catch {
+            print(error)
+        }
+    }
 
   func listen() {
     // 1
