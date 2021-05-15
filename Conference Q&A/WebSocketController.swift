@@ -41,6 +41,8 @@ struct AlertWrapper: Identifiable {
 final class WebSocketController: ObservableObject {
   @Published var alertWrapper: AlertWrapper?
     
+    @Published var questions: [UUID: NewQuestionResponse]
+    
   var alert: Alert? {
     didSet {
       guard let a = self.alert else { return }
@@ -57,6 +59,7 @@ final class WebSocketController: ObservableObject {
   private let encoder = JSONEncoder()
   
   init() {
+    self.questions = [:]
     self.alertWrapper = nil
     self.alert = nil
     
@@ -154,6 +157,23 @@ final class WebSocketController: ObservableObject {
   }
   
   func handleQuestionResponse(_ data: Data) throws {
-    // TODO: Implement
+    // 1
+    let response = try decoder.decode(NewQuestionResponse.self, from: data)
+    DispatchQueue.main.async {
+      if response.success, let id = response.id {
+        // 2
+        self.questions[id] = response
+        let alert = Alert(title: Text("New question received!"),
+                          message: Text(response.message),
+                          dismissButton: .default(Text("OK")) { self.alert = nil })
+        self.alert = alert
+      } else {
+        // 3
+        let alert = Alert(title: Text("Something went wrong!"),
+                          message: Text(response.message),
+                          dismissButton: .default(Text("OK")) { self.alert = nil })
+        self.alert = alert
+      }
+    }
   }
 }

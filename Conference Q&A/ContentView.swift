@@ -37,9 +37,6 @@ struct ContentView: View {
     // 1
     @State var newQuestion: String = ""
     
-    // TODO: Remove following line when socket is implemented.
-    @State var questions: [String] = []
-    
     // 2
     @ObservedObject var keyboard: Keyboard = .init()
     @ObservedObject var socket: WebSocketController = .init()
@@ -51,11 +48,11 @@ struct ContentView: View {
         Divider()
         // 4
         // TODO: Update list when socket is implemented.
-        List(self.questions, id: \.self) { q in
+        List(socket.questions.map { $1 }.sorted(), id: \.id) { q in
           VStack(alignment: .leading) {
-            Text(q)
-            Text("Status: Unanswered")
-              .foregroundColor(.red)
+            Text(q.content)
+            Text("Status: \(q.answered ? "Answered" : "Unanswered")")
+              .foregroundColor(q.answered ? .green : .red)
           }
         }
         Divider()
@@ -63,8 +60,6 @@ struct ContentView: View {
         TextField("Ask a new question", text: $newQuestion, onCommit: {
           guard !self.newQuestion.isEmpty else { return }
           self.socket.addQuestion(self.newQuestion)
-          // TODO: Remove following line when socket is implemented.
-          self.questions.append(self.newQuestion)
           self.newQuestion = ""
         })
           .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -78,7 +73,6 @@ struct ContentView: View {
     }
 
 }
-
 
 struct ContentView_Previews: PreviewProvider {
   static var previews: some View {
