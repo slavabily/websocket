@@ -152,9 +152,16 @@ final class WebSocketController: ObservableObject {
     }
   }
 
-  func handleQuestionAnswer(_ data: Data) throws {
-    // TODO: Implement
-  }
+    func handleQuestionAnswer(_ data: Data) throws {
+        // 1
+        let response = try decoder.decode(QuestionAnsweredMessage.self, from: data)
+        DispatchQueue.main.async {
+            // 2
+            guard let question = self.questions[response.questionId] else { return }
+            question.answered = true
+            self.questions[response.questionId] = question
+        }
+    }
   
   func handleQuestionResponse(_ data: Data) throws {
     // 1
